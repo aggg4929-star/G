@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="日记">
+<meta name="theme-color" content="#f5f2ea" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1b1a18" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>自律日记</title>
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f5f2ea; --card:#fffdf8; --ink:#1f1d1a; --ink2:#5a5650; --ink3:#8d8880;
+  --line:#e4dfd3; --accent:#2f6b4f; --accent-soft:#e3eee7; --warn-bg:#fbf0d9; --warn-ink:#7a5300;
+  --s1:#2a78d6; --s2:#eb6834; --bar:#2f6b4f; --danger:#b23a32;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#1b1a18; --card:#252421; --ink:#efece6; --ink2:#c3bfb6; --ink3:#8f8b83;
+    --line:#3a3833; --accent:#6fbf93; --accent-soft:#2a3a31; --warn-bg:#3a3020; --warn-ink:#f0c46a;
+    --s1:#3987e5; --s2:#d95926; --bar:#5fae84; --danger:#e66767;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#1b1a18; --card:#252421; --ink:#efece6; --ink2:#c3bfb6; --ink3:#8f8b83;
+  --line:#3a3833; --accent:#6fbf93; --accent-soft:#2a3a31; --warn-bg:#3a3020; --warn-ink:#f0c46a;
+  --s1:#3987e5; --s2:#d95926; --bar:#5fae84; --danger:#e66767;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink)}
+body{font:16px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  padding:env(safe-area-inset-top) 0 calc(64px + env(safe-area-inset-bottom));min-height:100vh}
+main{max-width:640px;margin:0 auto;padding:12px 16px 24px}
+h1{font-size:22px;margin:8px 0 2px;letter-spacing:.5px}
+h2{font-size:15px;color:var(--ink2);font-weight:600;margin:22px 0 8px}
+.sub{color:var(--ink3);font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+.vocab{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 0}
+.pill{font-size:13px;padding:3px 10px;border-radius:999px;background:var(--accent-soft);color:var(--ink)}
+.pill.none{background:transparent;border:1px dashed var(--line);color:var(--ink3)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;vertical-align:1px}
+textarea{width:100%;font-size:17px;line-height:1.75;font-family:inherit;color:var(--ink);background:var(--card);
+  border:1px solid var(--line);border-radius:14px;padding:14px;min-height:46vh;resize:none;outline:none}
+textarea:focus{border-color:var(--accent)}
+.tools{display:flex;justify-content:space-between;align-items:center;margin:8px 2px 0;gap:8px}
+button{font:inherit;font-size:15px;border:1px solid var(--line);background:var(--card);color:var(--ink);
+  border-radius:10px;padding:8px 14px;cursor:pointer}
+button:active{opacity:.6}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+:root[data-theme="dark"] button.primary{color:#10261a}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) button.primary{color:#10261a}}
+button.small{font-size:13px;padding:5px 10px}
+button.link{border:none;background:none;color:var(--accent);padding:4px 0}
+.saved{font-size:12px;color:var(--ink3)}
+.banner{background:var(--warn-bg);color:var(--warn-ink);border-radius:12px;padding:10px 12px;font-size:14px;margin:10px 0;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+/* 近7天 */
+.day{padding:16px 0 18px;border-bottom:1px solid var(--line)}
+.day:last-child{border-bottom:none}
+.dayhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.dayhead b{font-size:17px}
+.daytext{white-space:pre-wrap;word-break:break-word;margin-top:8px;font-size:16.5px;line-height:1.75}
+.empty{color:var(--ink3);font-style:normal;margin-top:6px}
+.pager{display:flex;justify-content:space-between;align-items:center;margin:12px 0}
+/* 统计 */
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:none;border-radius:0;padding:6px 16px;background:transparent}
+.seg button.on{background:var(--accent);color:#fff}
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.tile .n{font-size:24px;font-weight:650;font-variant-numeric:tabular-nums}
+.tile .l{font-size:12.5px;color:var(--ink2)}
+.chart{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 12px 8px;margin-top:12px}
+.chart .t{font-size:14px;font-weight:600}
+.legend{display:flex;gap:14px;font-size:12.5px;color:var(--ink2);margin:4px 0 6px}
+.plot{position:relative;height:150px;margin-right:30px;display:flex;align-items:flex-end;gap:2px;border-bottom:1px solid var(--line);padding-top:6px}
+.plot .grid{position:absolute;left:0;right:0;border-top:1px dashed var(--line);font-size:10.5px;color:var(--ink3)}
+.plot .grid{right:-30px}
+.plot .grid span{position:absolute;right:0;top:-9px;padding-left:3px;line-height:1}
+.col{flex:1;display:flex;align-items:flex-end;justify-content:center;gap:2px;height:100%;position:relative;cursor:pointer;min-width:0}
+.col.sel::before{content:"";position:absolute;inset:0 -1px;background:var(--accent-soft);border-radius:4px;z-index:0}
+.b{position:relative;z-index:1;flex:1;max-width:14px;border-radius:4px 4px 0 0;min-height:0}
+.xl{display:flex;gap:2px;margin-right:30px;font-size:10.5px;color:var(--ink3);margin-top:3px}
+.xl span{flex:1;text-align:center;min-width:0;white-space:nowrap;overflow:visible}
+.cap{font-size:13px;color:var(--ink2);min-height:21px;margin-top:6px}
+table{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:6px 4px;border-bottom:1px solid var(--line)}
+th{color:var(--ink2);font-weight:600}
+td.r,th.r{text-align:right}
+details summary{cursor:pointer;color:var(--ink2);font-size:14px;margin-top:10px}
+/* 设置 */
+.set{margin-top:12px}
+.set p{margin:6px 0;color:var(--ink2);font-size:14px}
+.set textarea{min-height:140px;font-size:14px;line-height:1.5}
+select{font:inherit;font-size:16px;padding:6px 10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.ver{color:var(--ink3);font-size:12.5px;text-align:center;margin:28px 0 8px}
+/* 底栏 */
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);
+  display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:10}
+nav button{flex:1;border:none;border-radius:0;background:none;padding:9px 0 8px;font-size:12px;color:var(--ink3);display:flex;flex-direction:column;align-items:center;gap:1px}
+nav button svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav button.on{color:var(--accent)}
+.toast{position:fixed;left:50%;bottom:calc(80px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);
+  padding:8px 16px;border-radius:999px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:20;max-width:90vw;text-align:center}
+.toast.show{opacity:.92}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<nav id="nav">
+  <button data-tab="write"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>写日记</button>
+  <button data-tab="week"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>近7天</button>
+  <button data-tab="stats"><svg viewBox="0 0 24 24"><path d="M5 20V11M12 20V5M19 20v-7"/></svg>统计</button>
+  <button data-tab="set"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>设置</button>
+</nav>
+<div class="toast" id="toast"></div>
+<input type="file" id="fileIn" accept=".json,application/json" class="hidden">
+
+<script>
+'use strict';
+const APP_VER = '1.0';
+const KEY = 'zilvDiary';
+const WD = ['周日','周一','周二','周三','周四','周五','周六'];
+
+/* ---------- 存储 ---------- */
+function blank(){ return { v:1, settings:{ dayStart:4, lastBackup:null, lastImport:null }, days:{}, vocab:{} }; }
+function load(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(!raw) return blank();
+    const s = JSON.parse(raw), b = blank();
+    return { ...b, ...s, settings:{ ...b.settings, ...(s.settings||{}) }, days:s.days||{}, vocab:s.vocab||{} };
+  }catch(e){ return blank(); }
+}
+let S = load();
+let storageOK = true;
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify(S)); storageOK = true; }
+  catch(e){ storageOK = false; toast('保存失败：手机存储空间可能不够'); }
+}
+try{ navigator.storage && navigator.storage.persist && navigator.storage.persist(); }catch(e){}
+
+/* ---------- 日期 ---------- */
+const pad = n => String(n).padStart(2,'0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parseYmd = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y,m-1,d); };
+function today(){ return ymd(new Date(Date.now() - (S.settings.dayStart||0)*3600e3)); }
+function addDays(s,n){ const d = parseYmd(s); d.setDate(d.getDate()+n); return ymd(d); }
+function md(s){ const d = parseYmd(s); return `${d.getMonth()+1}月${d.getDate()}日`; }
+function wd(s){ return WD[parseYmd(s).getDay()]; }
+function daysBetween(a,b){ return Math.round((parseYmd(b)-parseYmd(a))/864e5); }
+function stamp(){ const d = new Date(); return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}`; }
+function nowHM(){ const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+
+/* ---------- 工具 ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let toastT;
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove('show'), 1800); }
+const textOf = d => (S.days[d] && S.days[d].text || '').trim();
+const charCount = s => s.replace(/\s/g,'').length;
+function vocabLine(d){
+  const v = S.vocab[d];
+  if(!v) return '';
+  const p = [];
+  if(v.n != null) p.push(`新学 ${v.n}`);
+  if(v.r != null) p.push(`复习 ${v.r}`);
+  return p.join(' · ');
+}
+function vocabPills(d){
+  const v = S.vocab[d];
+  if(!v) return `<span class="pill none">单词：未导入</span>`;
+  let h = '';
+  if(v.n != null) h += `<span class="pill"><span class="dot" style="background:var(--s1)"></span>新学 ${v.n}</span>`;
+  if(v.r != null) h += `<span class="pill"><span class="dot" style="background:var(--s2)"></span>复习 ${v.r}</span>`;
+  return h;
+}
+async function copyText(t){
+  try{ await navigator.clipboard.writeText(t); toast('已复制，可以粘贴给 Claude'); return; }catch(e){}
+  const ta = document.createElement('textarea');
+  ta.value = t; ta.setAttribute('readonly',''); ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+  document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, t.length);
+  let ok = false; try{ ok = document.execCommand('copy'); }catch(e){}
+  ta.remove();
+  toast(ok ? '已复制，可以粘贴给 Claude' : '复制失败，请长按文字手动复制');
+}
+function dayReport(d){
+  const v = vocabLine(d);
+  return `【日记 ${d} ${wd(d)}】\n` + (v ? `单词：${v}\n` : '') + (textOf(d) || '（没写）');
+}
+function weekReport(end){
+  const out = [`【近7天日记 ${addDays(end,-6)} 至 ${end}】`];
+  for(let i=6;i>=0;i--) out.push('', dayReport(addDays(end,-i)));
+  return out.join('\n');
+}
+
+/* ---------- 每周提醒 ---------- */
+function weeklyBanner(){
+  const t = today(), s = S.settings;
+  const since = x => x ? daysBetween(x.slice(0,10), t) : Infinity;
+  const hasData = Object.keys(S.days).some(k => textOf(k));
+  const needB = hasData && since(s.lastBackup) >= 7;
+  const needI = since(s.lastImport) >= 7;
+  if(!needB && !needI) return '';
+  const what = [needI ? '导入单词报告' : '', needB ? '备份' : ''].filter(Boolean).join('和');
+  return `<div class="banner"><span>该做每周一次的${what}了</span><button class="small" data-go="set">去设置</button></div>`;
+}
+
+/* ---------- 页面：写日记 ---------- */
+let view = { tab:'write', date:null, weekEnd:null, range:7, sel:null };
+let saveT;
+function renderWrite(){
+  const t = today();
+  const d = view.date || t;
+  const isToday = d === t;
+  const text = (S.days[d] && S.days[d].text) || '';
+  $('#app').innerHTML = `
+    <h1>${md(d)} ${wd(d)}${isToday ? '' : ' <span class="sub">（补写）</span>'}</h1>
+    <div class="vocab">${vocabPills(d)}</div>
+    ${isToday ? weeklyBanner() : `<div class="row" style="margin-top:8px"><button class="small" id="backToday">回到今天</button></div>`}
+    <div style="margin-top:12px"><textarea id="ed" placeholder="今天干了什么？">${esc(text)}</textarea></div>
+    <div class="tools">
+      <button class="small" id="insTime">插入当前时间</button>
+      <span class="saved" id="saved">${text ? '已保存' : ''}</span>
+      <button class="small" id="copyDay">复制这天</button>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button class="small" id="prevDay">‹ 前一天</button>
+      ${isToday ? '' : `<button class="small" id="nextDay">后一天 ›</button>`}
+    </div>`;
+  const ed = $('#ed');
+  const grow = () => { ed.style.height = 'auto'; ed.style.height = Math.max(ed.scrollHeight+2, window.innerHeight*0.46) + 'px'; };
+  grow();
+  ed.addEventListener('input', () => {
+    grow();
+    $('#saved').textContent = '…';
+    clearTimeout(saveT);
+    saveT = setTimeout(() => commit(d, ed.value), 400);
+  });
+  ed.addEventListener('blur', () => { clearTimeout(saveT); commit(d, ed.value); });
+  $('#insTime').onclick = () => {
+    const pos = ed.selectionStart ?? ed.value.length;
+    const before = ed.value.slice(0,pos), after = ed.value.slice(pos);
+    const ins = (before && !before.endsWith('\n') ? '\n' : '') + nowHM() + ' ';
+    ed.value = before + ins + after;
+    ed.focus(); const p = before.length + ins.length; ed.setSelectionRange(p,p);
+    grow(); commit(d, ed.value);
+  };
+  $('#copyDay').onclick = () => { clearTimeout(saveT); commit(d, ed.value); copyText(dayReport(d)); };
+  $('#prevDay').onclick = () => { commit(d, ed.value); view.date = addDays(d,-1); render(); };
+  const nx = $('#nextDay'); if(nx) nx.onclick = () => { commit(d, ed.value); const n = addDays(d,1); view.date = n >= t ? null : n; render(); };
+  const bt = $('#backToday'); if(bt) bt.onclick = () => { commit(d, ed.value); view.date = null; render(); };
+}
+function commit(d, val){
+  const cur = (S.days[d] && S.days[d].text) || '';
+  if(val === cur){ const s = $('#saved'); if(s) s.textContent = val ? '已保存' : ''; return; }
+  if(!S.days[d]) S.days[d] = {};
+  S.days[d].text = val;
+  S.days[d].updated = new Date().toISOString();
+  if(!val.trim()) delete S.days[d];
+  save();
+  const s = $('#saved'); if(s) s.textContent = storageOK ? '已保存' : '保存失败';
+}
+
+/* ---------- 页面：近7天（连续阅读） ---------- */
+function renderWeek(){
+  const t = today();
+  const end = view.weekEnd || t;
+  const start = addDays(end,-6);
+  let written = 0, body = '';
+  for(let i=0;i<7;i++){
+    const d = addDays(end,-i);
+    const tx = textOf(d);
+    if(tx) written++;
+    const v = vocabLine(d);
+    body += `<div class="day">
+      <div class="dayhead"><b>${md(d)} ${wd(d)}${d===t?' · 今天':''}</b><button class="link small" data-edit="${d}">${tx?'修改':'补写'}</button></div>
+      ${v ? `<div class="sub">单词 ${v}</div>` : ''}
+      ${tx ? `<div class="daytext">${esc(tx)}</div>` : `<div class="empty">没写</div>`}
+    </div>`;
+  }
+  $('#app').innerHTML = `
+    <h1>近7天</h1>
+    <div class="sub">${md(start)} – ${md(end)} · 写了 ${written}/7 天</div>
+    <div class="row" style="margin-top:10px"><button class="small primary" id="copyWeek">复制这7天给 Claude</button></div>
+    <div class="card" style="margin-top:12px;padding-top:2px;padding-bottom:2px">${body}</div>
+    <div class="pager">
+      <button class="small" id="older">‹ 再往前7天</button>
+      ${end < t ? `<button class="small" id="newer">往后7天 ›</button>` : '<span></span>'}
+    </div>`;
+  $('#copyWeek').onclick = () => copyText(weekReport(end));
+  $('#older').onclick = () => { view.weekEnd = addDays(end,-7); render(); scrollTo(0,0); };
+  const nw = $('#newer'); if(nw) nw.onclick = () => { const n = addDays(end,7); view.weekEnd = n >= t ? null : n; render(); scrollTo(0,0); };
+  document.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => {
+    const d = b.dataset.edit; view.date = d === t ? null : d; view.tab = 'write'; render(); scrollTo(0,0);
+  });
+}
+
+/* ---------- 页面：统计 ---------- */
+function rangeDays(n){ const t = today(), a = []; for(let i=n-1;i>=0;i--) a.push(addDays(t,-i)); return a; }
+function streak(){
+  const t = today();
+  let d = textOf(t) ? t : addDays(t,-1), n = 0;
+  while(textOf(d)){ n++; d = addDays(d,-1); }
+  return n;
+}
+function niceMax(v){ if(v<=0) return 10; const p = Math.pow(10, Math.floor(Math.log10(v))); for(const m of [1,2,2.5,5,10]) if(m*p >= v) return m*p; return 10*p; }
+function barChart(id, title, days, series, fmtCap){
+  let max = 0;
+  days.forEach(d => series.forEach(s => { const v = s.get(d); if(v!=null && v>max) max = v; }));
+  const top = niceMax(max);
+  const cols = days.map(d => {
+    const bars = series.map(s => { const v = s.get(d) || 0; return `<div class="b" style="height:${v/top*100}%;background:${s.color}"></div>`; }).join('');
+    return `<div class="col${view.sel===id+d?' sel':''}" data-c="${id}" data-d="${d}">${bars}</div>`;
+  }).join('');
+  const step = days.length > 10 ? 5 : 1;
+  const xl = days.map((d,i) => { const show = (days.length-1-i) % step === 0; const dt = parseYmd(d); return `<span>${show ? (days.length>10 ? `${dt.getMonth()+1}/${dt.getDate()}` : wd(d).slice(1)) : ''}</span>`; }).join('');
+  const legend = series.length > 1 ? `<div class="legend">${series.map(s=>`<span><span class="dot" style="background:${s.color}"></span>${s.name}</span>`).join('')}</div>` : '';
+  const selD = view.sel && view.sel.startsWith(id) ? view.sel.slice(id.length) : null;
+  return `<div class="chart">
+    <div class="t">${title}</div>${legend}
+    <div class="plot">
+      <div class="grid" style="bottom:100%"><span>${top}</span></div>
+      <div class="grid" style="bottom:50%"><span>${top/2}</span></div>
+      ${cols}
+    </div>
+    <div class="xl">${xl}</div>
+    <div class="cap">${selD ? fmtCap(selD) : '点柱子看当天数字'}</div>
+  </div>`;
+}
+function renderStats(){
+  const n = view.range, days = rangeDays(n);
+  const wrote = days.filter(d => textOf(d)).length;
+  const chars = days.map(d => charCount(textOf(d)));
+  const avgChars = wrote ? Math.round(chars.reduce((a,b)=>a+b,0)/wrote) : 0;
+  const sumN = days.reduce((a,d)=>a+((S.vocab[d]||{}).n||0),0);
+  const sumR = days.reduce((a,d)=>a+((S.vocab[d]||{}).r||0),0);
+  const vDays = days.filter(d => S.vocab[d]).length;
+  const cap = d => { const v = vocabLine(d); return `${md(d)} ${wd(d)}：${v || '没有单词数据'}`; };
+  const capC = d => `${md(d)} ${wd(d)}：${charCount(textOf(d))} 字${textOf(d)?'':'（没写）'}`;
+  const rows = days.slice().reverse().map(d => { const v = S.vocab[d]||{}; return `<tr><td>${md(d)} ${wd(d)}</td><td class="r">${v.n??'–'}</td><td class="r">${v.r??'–'}</td><td class="r">${textOf(d)?charCount(textOf(d)):'没写'}</td></tr>`; }).join('');
+  $('#app').innerHTML = `
+    <h1>统计</h1>
+    <div class="seg" style="margin-top:6px"><button data-r="7" class="${n===7?'on':''}">近7天</button><button data-r="30" class="${n===30?'on':''}">近30天</button></div>
+    <div class="tiles">
+      <div class="tile"><div class="n">${wrote}/${n}</div><div class="l">写了日记的天数</div></div>
+      <div class="tile"><div class="n">${streak()}</div><div class="l">连续写了几天</div></div>
+      <div class="tile"><div class="n">${sumN}</div><div class="l">新学单词合计${vDays<n?`（有数据 ${vDays} 天）`:''}</div></div>
+      <div class="tile"><div class="n">${sumR}</div><div class="l">复习单词合计</div></div>
+    </div>
+    ${barChart('v', '每天单词', days, [
+      {name:'新学', color:'var(--s1)', get:d => (S.vocab[d]||{}).n},
+      {name:'复习', color:'var(--s2)', get:d => (S.vocab[d]||{}).r}], cap)}
+    ${barChart('c', `每天日记字数（写了的天平均 ${avgChars} 字）`, days, [
+      {name:'字数', color:'var(--bar)', get:d => charCount(textOf(d))}], capC)}
+    <details><summary>表格</summary>
+      <table><tr><th>日期</th><th class="r">新学</th><th class="r">复习</th><th class="r">字数</th></tr>${rows}</table>
+    </details>`;
+  document.querySelectorAll('[data-r]').forEach(b => b.onclick = () => { view.range = +b.dataset.r; view.sel = null; render(); });
+  document.querySelectorAll('.col').forEach(c => c.onclick = () => { const k = c.dataset.c + c.dataset.d; view.sel = view.sel === k ? null : k; const y = scrollY; render(); scrollTo(0,y); });
+}
+
+/* ---------- 导入复习软件报告 ---------- */
+function parseReport(text){
+  const t = today(), ty = +t.slice(0,4);
+  const res = {};
+  const dateRe = /(?:(\d{4})\s*[-/.年]\s*(\d{1,2})\s*[-/.月]\s*(\d{1,2})|(?<![\d.:/])(\d{1,2})\s*(?:-|月)\s*(\d{1,2})(?![\d.:]))\s*日?/;
+  const NEW = /(学新词|新学单词|新学|新词|学会)[^\d\n]{0,10}?(\d+)(?![\d.%:])/;
+  const REV = /(已复习|复习了|复习单词|复习)[^\d\n]{0,10}?(\d+)(?![\d.%:])/;
+  const NEW_BAD = /计划|目标|上限|每天学|待学|剩/;
+  const REV_BAD = /额外|待复习|到期|明天|明日|预计|剩|逾期|欠|未复习/;
+  const getDate = line => {
+    const m = line.match(dateRe); if(!m) return null;
+    let y, mo, d;
+    if(m[1]){ y = +m[1]; mo = +m[2]; d = +m[3]; }
+    else { mo = +m[4]; d = +m[5]; y = ty; }
+    if(mo<1||mo>12||d<1||d>31) return null;
+    let s = `${y}-${pad(mo)}-${pad(d)}`;
+    if(!m[1] && s > t) s = `${y-1}-${pad(mo)}-${pad(d)}`;
+    if(s > t || daysBetween(s,t) > 400) return null;
+    return s;
+  };
+  const split = l => l.split(/\s*[|｜\t]\s*|\s{2,}/).map(x=>x.trim()).filter((x,i,a)=>!(x===''&&(i===0||i===a.length-1)));
+  let ctx = null, hdr = null;
+  const put = (d,k,v) => { if(!d) return; res[d] = res[d] || {}; if(res[d][k] == null) res[d][k] = v; };
+  for(const raw of text.split(/\r?\n/)){
+    const line = raw.trim(); if(!line) continue;
+    const cells = split(line);
+    let d = getDate(line);
+    if(!d && hdr && cells.length === hdr.len){   // 表格里的 10/23 这种写法
+      const m = cells[0].match(/^(\d{1,2})\/(\d{1,2})$/);
+      if(m) d = getDate(`${m[1]}-${m[2]}`);
+    }
+    // 表头：同一行同时出现「新学类」和「复习」且没有数字
+    if(cells.length >= 3 && !/\d/.test(line) && /新学|学会|新词/.test(line) && /复习/.test(line)){
+      const ni = cells.findIndex(c => /新学|学会|新词/.test(c) && !NEW_BAD.test(c));
+      const ri = cells.findIndex(c => /复习/.test(c) && !REV_BAD.test(c));
+      hdr = { len:cells.length, ni, ri }; continue;
+    }
+    if(hdr && d && cells.length === hdr.len){
+      const num = i => { if(i<0) return null; const m = (cells[i]||'').match(/\d+/); return m ? +m[0] : null; };
+      const a = num(hdr.ni), b = num(hdr.ri);
+      if(a != null) put(d,'n',a);
+      if(b != null) put(d,'r',b);
+      continue;
+    }
+    if(d && !hdr) ctx = d;
+    const target = d || ctx;
+    const body = line.replace(new RegExp(dateRe.source,'g'), ' ').replace(/\d{1,2}:\d{2}/g,' ');   // 去掉日期和时刻，免得把 2026 当成数量
+    const mn = body.match(NEW), mr = body.match(REV);
+    if(mn && !NEW_BAD.test(line)) put(target,'n',+mn[2]);
+    if(mr && !REV_BAD.test(line) && !(mn && mr.index > mn.index && mr[2] === mn[2])) put(target,'r',+mr[2]);
+    if(d) ctx = d;
+  }
+  return res;
+}
+let pendingImport = null;
+function previewImport(){
+  const res = parseReport($('#rep').value);
+  const ds = Object.keys(res).sort().reverse();
+  const box = $('#repPrev');
+  if(!ds.length){ pendingImport = null; box.innerHTML = `<p style="color:var(--danger)">没认出日期和数字。把报告原文发给 Claude，让它改识别规则。</p>`; return; }
+  pendingImport = res;
+  const cell = (o,k) => o && o[k] != null ? o[k] : '–';
+  box.innerHTML = `<p>认出 ${ds.length} 天，核对一下：</p>
+    <table><tr><th>日期</th><th class="r">新学</th><th class="r">复习</th><th class="r">原来</th></tr>
+    ${ds.map(d => { const o = S.vocab[d]; return `<tr><td>${md(d)} ${wd(d)}</td><td class="r">${cell(res[d],'n')}</td><td class="r">${cell(res[d],'r')}</td><td class="r sub">${o ? `${cell(o,'n')} / ${cell(o,'r')}` : '无'}</td></tr>`; }).join('')}</table>
+    <div class="row" style="margin-top:10px"><button class="primary" id="repOk">没问题，导入</button></div>`;
+  $('#repOk').onclick = () => {
+    for(const [d,v] of Object.entries(pendingImport)){
+      S.vocab[d] = { ...(S.vocab[d]||{}), ...v, at:new Date().toISOString() };
+    }
+    S.settings.lastImport = new Date().toISOString();
+    save(); pendingImport = null;
+    toast(`已导入 ${ds.length} 天`);
+    render();
+  };
+}
+
+/* ---------- 备份 ---------- */
+async function exportBackup(){
+  const name = `自律日记备份_${stamp()}.json`;
+  const data = JSON.stringify({ app:'zilv-diary', version:APP_VER, exportedAt:new Date().toISOString(), data:S }, null, 1);
+  const file = new File([data], name, { type:'application/json' });
+  const done = () => { S.settings.lastBackup = new Date().toISOString(); save(); render(); };
+  try{
+    if(navigator.canShare && navigator.canShare({ files:[file] })){
+      await navigator.share({ files:[file] });
+      done(); toast('已备份'); return;
+    }
+  }catch(e){ if(e && e.name === 'AbortError'){ toast('没有备份'); return; } }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(file); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+  done(); toast('已导出备份文件');
+}
+function importBackup(file){
+  const r = new FileReader();
+  r.onload = () => {
+    try{
+      const j = JSON.parse(r.result);
+      const data = j.app === 'zilv-diary' ? j.data : j;
+      if(!data || typeof data.days !== 'object') throw 0;
+      const nd = Object.keys(data.days).length;
+      if(!confirm(`备份里有 ${nd} 天日记（导出于 ${(j.exportedAt||'').slice(0,16).replace('T',' ')}）。\n恢复后，手机上现在的全部日记会被这份备份替换。确定吗？`)) return;
+      const b = blank();
+      S = { ...b, ...data, settings:{ ...b.settings, ...(data.settings||{}) }, vocab:data.vocab||{} };
+      save(); toast('已恢复'); render();
+    }catch(e){ toast('这个文件不是日记备份'); }
+  };
+  r.readAsText(file);
+}
+
+/* ---------- 页面：设置 ---------- */
+function renderSet(){
+  const s = S.settings;
+  const fmt = x => x ? x.slice(0,16).replace('T',' ') : '从没做过';
+  const ndays = Object.keys(S.days).filter(k=>textOf(k)).length;
+  $('#app').innerHTML = `
+    <h1>设置</h1>
+    <h2>每周一次：导入单词报告</h2>
+    <div class="card set">
+      <p>在复习软件里点「复制近30天」或「今天」的报告，粘贴到下面。同一天被几份报告重复带上也没关系：按日期合并，新的覆盖旧的。日记里只取每天「新学几个、复习几个」。</p>
+      <textarea id="rep" placeholder="粘贴复习软件的报告"></textarea>
+      <div class="row" style="margin-top:8px"><button id="repGo">识别</button><button class="small link" id="repClr">清空</button></div>
+      <div id="repPrev"></div>
+      <p class="sub">上次导入：${fmt(s.lastImport)}</p>
+    </div>
+    <h2>每周一次：备份</h2>
+    <div class="card set">
+      <p>日记只存在这部手机的这个图标里，删掉图标或换手机就没了。点「备份」后选「存储到"文件"」，存到 iCloud 云盘最稳。</p>
+      <div class="row"><button class="primary" id="bk">备份</button><button id="rs">从备份恢复</button></div>
+      <p class="sub">上次备份：${fmt(s.lastBackup)} · 现有 ${ndays} 天日记</p>
+    </div>
+    <h2>一天从几点算起</h2>
+    <div class="card set">
+      <p>凌晨熬夜写的还算前一天。</p>
+      <select id="ds">${[0,1,2,3,4,5,6].map(h=>`<option value="${h}" ${h===s.dayStart?'selected':''}>${pad(h)}:00</option>`).join('')}</select>
+    </div>
+    <div class="ver">自律日记 ${APP_VER} · 数据只存在本机，不上传</div>`;
+  $('#repGo').onclick = previewImport;
+  $('#repClr').onclick = () => { $('#rep').value = ''; $('#repPrev').innerHTML = ''; };
+  $('#bk').onclick = exportBackup;
+  $('#rs').onclick = () => $('#fileIn').click();
+  $('#ds').onchange = e => { s.dayStart = +e.target.value; save(); toast('已改'); };
+}
+$('#fileIn').onchange = e => { const f = e.target.files[0]; if(f) importBackup(f); e.target.value = ''; };
+
+/* ---------- 路由 ---------- */
+function render(){
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.tab === view.tab));
+  ({ write:renderWrite, week:renderWeek, stats:renderStats, set:renderSet })[view.tab]();
+  document.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { view.tab = b.dataset.go; render(); scrollTo(0,0); });
+}
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
+  const ed = $('#ed'); if(ed && view.tab === 'write') commit(view.date || today(), ed.value);
+  view.tab = b.dataset.tab;
+  if(view.tab === 'write') view.date = null;
+  if(view.tab === 'week') view.weekEnd = null;
+  render(); scrollTo(0,0);
+});
+document.addEventListener('visibilitychange', () => {
+  const ed = $('#ed');
+  if(document.hidden){ if(ed && view.tab==='write') commit(view.date || today(), ed.value); }
+  else if(view.tab === 'write' && !view.date && document.activeElement !== ed) render();   // 跨天回来自动换到新的一天
+});
+render();
+
+if('serviceWorker' in navigator && location.protocol === 'https:'){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
